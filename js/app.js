@@ -2,6 +2,9 @@
 
 (() => {
   const ADMIN_PASSWORD = "123456";
+  const IMG_DIR = "img";
+  const DEFAULT_IMAGE_FILE = "La-sombra-del-viento.jpg";
+
   const state = {
     categories: [],
     products: [],
@@ -10,34 +13,11 @@
     categoryVisibility: {}
   };
 
-  let pendingProductImage = "";
-
-  function createBookCover(title, bgColor, textColor) {
-    const safeTitle = title
-      .slice(0, 34)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&apos;");
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="280" height="390" viewBox="0 0 280 390">
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="${bgColor}" />
-            <stop offset="100%" stop-color="#ffffff" />
-          </linearGradient>
-        </defs>
-        <rect width="280" height="390" rx="16" fill="url(#g)" />
-        <rect x="20" y="20" width="240" height="350" rx="12" fill="none" stroke="rgba(0,0,0,0.12)" />
-        <text x="140" y="192" text-anchor="middle" font-size="24" font-family="Georgia, serif" fill="${textColor}">
-          ${safeTitle}
-        </text>
-        <text x="140" y="330" text-anchor="middle" font-size="16" font-family="Arial, sans-serif" fill="rgba(0,0,0,0.45)">
-          Entre Lineas
-        </text>
-      </svg>`;
-    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  function buildImagePath(fileName) {
+    const normalized = String(fileName || "").trim().replaceAll("\\", "/").replace(/^\/+/, "");
+    if (!normalized) return `${IMG_DIR}/${DEFAULT_IMAGE_FILE}`;
+    if (normalized.startsWith(`${IMG_DIR}/`)) return normalized;
+    return `${IMG_DIR}/${normalized}`;
   }
 
   function bootstrapData() {
@@ -49,44 +29,49 @@
 
     state.products = [
       {
+        titulo: "La sombra del viento",
         code: "EL001",
         categoryId: "novela",
-        description: "La sombra del viento - novela de misterio literario",
+        description: "Novela de misterio literario ambientada en Barcelona.",
         price: 21.9,
         stock: 6,
-        image: createBookCover("La sombra", "#f6d7b0", "#53311f")
+        image: buildImagePath("La-sombra-del-viento.jpg")
       },
       {
+        titulo: "Patria",
         code: "EL002",
         categoryId: "novela",
-        description: "Patria - relato de memorias y reconciliacion",
+        description: "Relato sobre memoria, conflicto y reconciliacion.",
         price: 18.5,
         stock: 4,
-        image: createBookCover("Patria", "#e7d9f5", "#362146")
+        image: buildImagePath("patria.jpg")
       },
       {
+        titulo: "Sapiens",
         code: "EL003",
         categoryId: "ensayo",
-        description: "Sapiens - historia breve de la humanidad",
+        description: "Breve historia de la humanidad y sus transformaciones.",
         price: 24.2,
         stock: 5,
-        image: createBookCover("Sapiens", "#d7eee1", "#1b4d36")
+        image: buildImagePath("sapiens.jfif")
       },
       {
+        titulo: "El principito",
         code: "EL004",
         categoryId: "infantil",
-        description: "El principito - clasico ilustrado para todas las edades",
+        description: "Clasico ilustrado para lectores de todas las edades.",
         price: 14.75,
         stock: 8,
-        image: createBookCover("Principito", "#ffe9ba", "#7f3f00")
+        image: buildImagePath("el-principito.jpg")
       },
       {
+        titulo: "Cuentos para soñar",
         code: "EL005",
         categoryId: "infantil",
-        description: "Cuentos para sonar - historias cortas para ninos",
+        description: "Historias cortas para lectura antes de dormir.",
         price: 12.9,
         stock: 3,
-        image: createBookCover("Cuentos", "#cce8ff", "#0f3f75")
+        image: buildImagePath("cuentos.jpg")
       }
     ];
 
@@ -162,10 +147,11 @@
             return `
               <div class="product-row ${outOfStock ? "out-of-stock" : ""}">
                 <div class="product-thumb-wrap">
-                  <img class="product-thumb" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.description)}">
+                  <img class="product-thumb" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.titulo)}">
                 </div>
                 <div>
                   <p class="product-code mb-1">Codigo: <strong>${escapeHtml(product.code)}</strong></p>
+                  <p class="mb-1"><strong>${escapeHtml(product.titulo)}</strong></p>
                   <p class="product-desc">${escapeHtml(product.description)}</p>
                   <p class="mb-1">Precio: <strong>${formatCurrency(product.price)}</strong></p>
                   <p class="mb-2">Stock disponible: <strong>${product.stock}</strong></p>
@@ -214,9 +200,10 @@
           const itemTotal = quantity * product.price;
           return `
             <div class="cart-item">
-              <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.description)}">
+              <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.titulo)}">
               <div>
-                <p class="mb-1"><strong>${escapeHtml(product.description)}</strong></p>
+                <p class="mb-1"><strong>${escapeHtml(product.titulo)}</strong></p>
+                <small>${escapeHtml(product.description)}</small><br>
                 <small>Codigo: ${escapeHtml(product.code)}</small><br>
                 <small>Precio unidad: ${formatCurrency(product.price)}</small><br>
                 <small>Unidades: ${quantity}</small><br>
@@ -353,41 +340,18 @@
     event.target.reset();
   }
 
-  function readSelectedImage(event) {
-    const input = event.target;
-    const file = input.files && input.files[0];
-    pendingProductImage = "";
-
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      showAdminMessage("El archivo seleccionado no es una imagen valida.", true);
-      input.value = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      pendingProductImage = String(loadEvent.target?.result || "");
-      showAdminMessage("Imagen local lista para el nuevo producto.", false);
-    };
-    reader.onerror = () => {
-      pendingProductImage = "";
-      showAdminMessage("No se pudo leer la imagen seleccionada.", true);
-    };
-    reader.readAsDataURL(file);
-  }
-
   function addProduct(event) {
     event.preventDefault();
 
+    const titulo = $("#productTitle").val().trim();
     const code = $("#productCode").val().trim();
     const categoryId = $("#productCategory").val();
     const description = $("#productDescription").val().trim();
     const price = Number.parseFloat($("#productPrice").val());
     const stock = Number.parseInt($("#productStock").val(), 10);
-    const imageUrl = $("#productImageUrl").val().trim();
+    const imageName = $("#productImageName").val().trim();
 
-    if (!code || !categoryId || !description || Number.isNaN(price) || Number.isNaN(stock)) {
+    if (!titulo || !code || !categoryId || !description || Number.isNaN(price) || Number.isNaN(stock)) {
       showAdminMessage("Completa todos los campos obligatorios del producto.", true);
       return;
     }
@@ -407,24 +371,19 @@
       return;
     }
 
-    let imageSource = pendingProductImage || imageUrl;
-    if (!imageSource) {
-      imageSource = createBookCover(code, "#f1ede1", "#3d3425");
-    }
-
     state.products.push({
+      titulo,
       code,
       categoryId,
       description,
       price,
       stock,
-      image: imageSource
+      image: buildImagePath(imageName)
     });
 
     renderProducts();
     showAdminMessage(`Producto "${code}" agregado correctamente.`, false);
     event.target.reset();
-    pendingProductImage = "";
   }
 
   function bindEvents() {
@@ -462,7 +421,6 @@
     $("#adminAccessBtn").on("click", requestAdminAccess);
     $("#categoryForm").on("submit", addCategory);
     $("#productForm").on("submit", addProduct);
-    $("#productImageFile").on("change", readSelectedImage);
   }
 
   function init() {

@@ -39,6 +39,30 @@ body {
 .brand-title {
   font-family: "Merriweather", Georgia, serif;
   font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.brand-title::before,
+.brand-title::after {
+  content: "";
+  display: block;
+  width: clamp(2.2rem, 8vw, 5rem);
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 575.98px) {
+  .brand-title {
+    gap: 0.55rem;
+  }
+
+  .brand-title::before,
+  .brand-title::after {
+    width: 1.6rem;
+  }
 }
 
 .control-btn {
@@ -86,7 +110,7 @@ body {
 .product-row {
   display: grid;
   grid-template-columns: 80px 1fr;
-  gap: 0.85rem;
+  gap: 3.5rem;
   align-items: center;
   border-bottom: 1px solid #edf0f2;
   padding-block: 0.8rem;
@@ -97,8 +121,8 @@ body {
 }
 
 .product-thumb-wrap {
-  width: 80px;
-  height: 110px;
+  width: 120px;
+  height: 180px;
   border-radius: 0.45rem;
   overflow: hidden;
   background: #f1f5f8;
