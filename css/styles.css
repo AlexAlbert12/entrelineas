@@ -1,0 +1,216 @@
+:root {
+  --bg: #f8f5ef;
+  --surface: #ffffff;
+  --ink: #1f2933;
+  --muted: #5b6670;
+  --brand: #1f5a50;
+  --brand-soft: #dff2ec;
+  --accent: #c7642b;
+  --danger-soft: #fbe9e7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 20%, #f6ead8 0, rgba(246, 234, 216, 0) 50%),
+    radial-gradient(circle at 95% 0, #deebe7 0, rgba(222, 235, 231, 0) 45%),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+}
+
+.topbar {
+  background: linear-gradient(110deg, #1f5a50 0%, #244f73 100%);
+  color: #fff;
+}
+
+.brand-kicker {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.brand-title {
+  font-family: "Merriweather", Georgia, serif;
+  font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+}
+
+.control-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding-inline: 1rem;
+}
+
+.control-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.section-title {
+  font-family: "Merriweather", Georgia, serif;
+  font-size: 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.category-card {
+  border: none;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.category-header {
+  width: 100%;
+  border: none;
+  background: var(--brand-soft);
+  color: var(--brand);
+  text-align: left;
+  padding: 0.9rem 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.category-products {
+  padding: 0.5rem 1rem 1rem;
+}
+
+.product-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0.85rem;
+  align-items: center;
+  border-bottom: 1px solid #edf0f2;
+  padding-block: 0.8rem;
+}
+
+.product-row:last-child {
+  border-bottom: none;
+}
+
+.product-thumb-wrap {
+  width: 80px;
+  height: 110px;
+  border-radius: 0.45rem;
+  overflow: hidden;
+  background: #f1f5f8;
+  border: 1px solid #d9e1e8;
+}
+
+.product-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1);
+  transition: transform 220ms ease;
+}
+
+.product-thumb-wrap:hover .product-thumb {
+  transform: scale(1.35);
+}
+
+.product-row.out-of-stock .product-thumb {
+  opacity: 0.35;
+}
+
+.product-code {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.product-desc {
+  margin-bottom: 0.35rem;
+}
+
+.disabled-link {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.cart-panel {
+  background: var(--surface);
+  border: 1px solid #e8edf1;
+  border-radius: 1rem;
+  padding: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 0.75rem;
+  border-bottom: 1px solid #ecf0f4;
+  padding-block: 0.75rem;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.cart-item img {
+  width: 58px;
+  height: 80px;
+  border-radius: 0.35rem;
+  object-fit: cover;
+  border: 1px solid #d9e1e8;
+}
+
+.cart-item small {
+  color: var(--muted);
+}
+
+.cart-footer {
+  border-top: 1px solid #e7edf2;
+  margin-top: 0.75rem;
+  padding-top: 0.85rem;
+}
+
+.total-label {
+  font-size: 1.02rem;
+}
+
+.order-confirmation {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-radius: 0.6rem;
+  padding: 0.7rem;
+  font-weight: 600;
+}
+
+.admin-box {
+  background: #f8fafc;
+  border: 1px solid #dfe7ee;
+  border-radius: 0.85rem;
+  padding: 0.95rem;
+}
+
+.admin-status-success {
+  color: #0f5f38;
+  background: #def6e8;
+  border: 1px solid #9fd7b5;
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.admin-status-error {
+  color: #8b1f1f;
+  background: var(--danger-soft);
+  border: 1px solid #efb8b1;
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+}
+
+@media (max-width: 991.98px) {
+  .cart-panel {
+    position: static;
+  }
+}
