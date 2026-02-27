@@ -24,11 +24,13 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <div class="category-quick-nav">
-                        <label for="categoryQuickNav" class="category-quick-nav-label visually-hidden">Ir a categoría</label>
-                        <select id="categoryQuickNav" class="form-select category-quick-nav-select" aria-label="Seleccionar categoría"></select>
+                        <button id="categoryQuickNavBtn" type="button" class="btn btn-outline-light control-btn category-menu-trigger" aria-expanded="false" aria-haspopup="true">
+                            <span class="btn-label">Categoría</span>
+                        </button>
+                        <div id="categoryQuickNavMenu" class="category-fan-menu" role="menu" aria-label="Categorías disponibles"></div>
                     </div>
                     <button id="toggleCartBtn" type="button" class="btn btn-outline-light control-btn">
-                        <span class="control-icon" aria-hidden="true"><svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" transform="translate(2 4)"><path d="m3 2.5h12.5l-1.5855549 5.54944226c-.2453152.85860311-1.0300872 1.45055774-1.9230479 1.45055774h-6.70131161c-1.01909844 0-1.87522688-.76627159-1.98776747-1.77913695l-.80231812-7.22086305h-2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="5" cy="12" r="1"/><circle cx="13" cy="12" r="1"/></g></g></svg></span>
+                        <span class="control-icon cart-icon" aria-hidden="true"><svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" transform="translate(2 4)"><path d="m3 2.5h12.5l-1.5855549 5.54944226c-.2453152.85860311-1.0300872 1.45055774-1.9230479 1.45055774h-6.70131161c-1.01909844 0-1.87522688-.76627159-1.98776747-1.77913695l-.80231812-7.22086305h-2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="5" cy="12" r="1"/><circle cx="13" cy="12" r="1"/></g></g></svg><span id="cartCountBadge" class="cart-count-badge is-empty">0</span></span>
                         <span class="btn-label">Ocultar cesta</span>
                     </button>
                     <button id="adminAccessBtn" type="button" class="btn btn-outline-light control-btn">
@@ -49,7 +51,7 @@
                 <div class="catalog-toolbar">
                     <div class="catalog-toolbar-item">
                         <label for="catalogSearch" class="catalog-toolbar-label">Buscar en catálogo</label>
-                        <input id="catalogSearch" type="search" class="form-control" placeholder="Título, código o descripción">
+                        <input id="catalogSearch" type="search" class="form-control" placeholder="Título, autor, código o descripción">
                     </div>
                     <div class="catalog-toolbar-item">
                         <label for="catalogSort" class="catalog-toolbar-label">Ordenar por</label>
@@ -78,7 +80,6 @@
                             <span>Realizar Pedido</span>
                         </button>
                         <button id="clearCartBtn" type="button" class="btn btn-outline-secondary w-100 mt-2">Vaciar cesta</button>
-                        <p id="orderConfirmation" class="order-confirmation d-none mt-3 mb-0"></p>
                     </div>
                 </div>
             </aside>
@@ -105,6 +106,7 @@
                                         <label for="categoryId" class="form-label">Identificador único</label>
                                         <input id="categoryId" name="categoryId" class="form-control" type="text"
                                             maxlength="30" required>
+                                        <div id="categoryIdDuplicateError" class="small text-danger mt-1 d-none" aria-live="polite"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="categoryName" class="form-label">Nombre visible</label>
@@ -126,9 +128,15 @@
                                             maxlength="100" required>
                                     </div>
                                     <div class="mb-3">
+                                        <label for="productAuthor" class="form-label">Autor</label>
+                                        <input id="productAuthor" name="productAuthor" class="form-control" type="text"
+                                            maxlength="100" required>
+                                    </div>
+                                    <div class="mb-3">
                                         <label for="productCode" class="form-label">Código único</label>
                                         <input id="productCode" name="productCode" class="form-control" type="text"
                                             maxlength="20" required>
+                                        <div id="productCodeDuplicateError" class="small text-danger mt-1 d-none" aria-live="polite"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="productCategory" class="form-label">Categoría</label>
@@ -176,6 +184,7 @@
                                     <div class="mb-3">
                                         <label for="editCategoryId" class="form-label">Nuevo identificador</label>
                                         <input id="editCategoryId" class="form-control" type="text" maxlength="30" required>
+                                        <div id="editCategoryIdDuplicateError" class="small text-danger mt-1 d-none" aria-live="polite"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="editCategoryName" class="form-label">Nuevo nombre</label>
@@ -202,8 +211,13 @@
                                         <input id="editProductTitle" class="form-control" type="text" maxlength="100" required>
                                     </div>
                                     <div class="mb-3">
+                                        <label for="editProductAuthor" class="form-label">Autor</label>
+                                        <input id="editProductAuthor" class="form-control" type="text" maxlength="100" required>
+                                    </div>
+                                    <div class="mb-3">
                                         <label for="editProductCode" class="form-label">Código</label>
                                         <input id="editProductCode" class="form-control" type="text" maxlength="20" required>
+                                        <div id="editProductCodeDuplicateError" class="small text-danger mt-1 d-none" aria-live="polite"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label for="editProductCategory" class="form-label">Categoría</label>
@@ -257,6 +271,20 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="orderSuccessModal" tabindex="-1" aria-labelledby="orderSuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title fs-5" id="orderSuccessModalLabel">Pedido confirmado</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="orderSuccessModalBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" aria-live="polite" aria-atomic="true"></div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

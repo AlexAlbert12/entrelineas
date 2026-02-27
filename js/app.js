@@ -4,6 +4,7 @@
   const ADMIN_PASSWORD = "123456";
   const IMG_DIR = "img";
   const DEFAULT_IMAGE_FILE = "La-sombra-del-viento.jpg";
+  const STORAGE_KEY = "entrelineas-state-v1";
   const ADD_TO_CART_ICON = '<svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 4)"><path d="m2.42575356.50254623 8.09559774-.00228586c.5209891-.00014706.9548019.39973175.9969972.91900932l.8938128 10.99973961c.0447299.5504704-.3652538 1.0329756-.9157242 1.0777056l-.0809907.0032851h-9.83555122c-.55228475 0-1-.4477152-1-1l.00294679-.076713.84614072-10.99745378c.0400765-.52088193.4743495-.92313949.99677087-.92328699z"/><path d="m9.5 4.5v.64527222c0 1.10456949-1.8954305 1.35472778-3 1.35472778s-3-.3954305-3-1.5v-.5"/></g></svg>';
 
   const state = {
@@ -28,12 +29,16 @@
     state.categories = [
       { id: "novela", name: "Novela" },
       { id: "ensayo", name: "Ensayo" },
-      { id: "infantil", name: "Infantil" }
+      { id: "infantil", name: "Infantil" },
+      { id: "fantasia", name: "Fantasia" },
+      { id: "poesia", name: "Poesia" },
+      { id: "historia", name: "Historia" }
     ];
 
     state.products = [
       {
         titulo: "La sombra del viento",
+        author: "Carlos Ruiz Zafon",
         code: "EL001",
         categoryId: "novela",
         description: "Novela de misterio literario ambientada en Barcelona.",
@@ -43,6 +48,7 @@
       },
       {
         titulo: "Patria",
+        author: "Fernando Aramburu",
         code: "EL002",
         categoryId: "novela",
         description: "Relato sobre memoria, conflicto y reconciliacion.",
@@ -52,6 +58,7 @@
       },
       {
         titulo: "Sapiens",
+        author: "Yuval Noah Harari",
         code: "EL003",
         categoryId: "ensayo",
         description: "Breve historia de la humanidad y sus transformaciones.",
@@ -61,6 +68,7 @@
       },
       {
         titulo: "El principito",
+        author: "Antoine de Saint-Exupery",
         code: "EL004",
         categoryId: "infantil",
         description: "Clasico ilustrado para lectores de todas las edades.",
@@ -70,12 +78,93 @@
       },
       {
         titulo: "Cuentos para soñar",
+        author: "Varios autores",
         code: "EL005",
         categoryId: "infantil",
         description: "Historias cortas para lectura antes de dormir.",
         price: 12.9,
         stock: 3,
         image: buildImagePath("cuentos.jpg")
+      },
+      {
+        titulo: "1984",
+        author: "George Orwell",
+        code: "EL006",
+        categoryId: "novela",
+        description: "Distopia clasica sobre vigilancia y control social.",
+        price: 16.4,
+        stock: 7,
+        image: buildImagePath("1984.jpg")
+      },
+      {
+        titulo: "El hombre en busca de sentido",
+        author: "Viktor Frankl",
+        code: "EL007",
+        categoryId: "ensayo",
+        description: "Reflexion sobre resiliencia, libertad interior y proposito.",
+        price: 19.6,
+        stock: 5,
+        image: buildImagePath("hombre_en_busca_sentido.jpg")
+      },
+      {
+        titulo: "El hobbit",
+        author: "J. R. R. Tolkien",
+        code: "EL008",
+        categoryId: "fantasia",
+        description: "Aventura fantastica sobre el viaje de Bilbo Bolsón.",
+        price: 22.1,
+        stock: 6,
+        image: buildImagePath("el_hobbit.jpg")
+      },
+      {
+        titulo: "Mitos nordicos",
+        author: "Neil Gaiman",
+        code: "EL009",
+        categoryId: "fantasia",
+        description: "Recopilacion de leyendas y dioses del norte de Europa.",
+        price: 17.3,
+        stock: 4,
+        image: buildImagePath("mitos_nordicos.jpg")
+      },
+      {
+        titulo: "Veinte poemas de amor",
+        author: "Pablo Neruda",
+        code: "EL010",
+        categoryId: "poesia",
+        description: "Coleccion poetica centrada en el amor y la melancolia.",
+        price: 13.8,
+        stock: 9,
+        image: buildImagePath("veinte_poemas.jpg")
+      },
+      {
+        titulo: "Poeta en Nueva York",
+        author: "Federico Garcia Lorca",
+        code: "EL011",
+        categoryId: "poesia",
+        description: "Obra lirica con critica social y lenguaje simbolico.",
+        price: 15.2,
+        stock: 5,
+        image: buildImagePath("poeta_nueva_york.jpg")
+      },
+      {
+        titulo: "SPQR: Una historia de la antigua Roma",
+        author: "Mary Beard",
+        code: "EL012",
+        categoryId: "historia",
+        description: "Panorama claro sobre la expansion y legado de Roma.",
+        price: 23.7,
+        stock: 4,
+        image: buildImagePath("spqr.jpg")
+      },
+      {
+        titulo: "Breve historia de casi todo",
+        author: "Bill Bryson",
+        code: "EL013",
+        categoryId: "historia",
+        description: "Recorrido divulgativo por ciencia e historia del conocimiento.",
+        price: 20.5,
+        stock: 6,
+        image: buildImagePath("breve-historia.jpg")
       }
     ];
 
@@ -84,6 +173,141 @@
     state.categories.forEach((category) => {
       state.categoryVisibility[category.id] = true;
     });
+  }
+
+  function normalizeState() {
+    const categoryIdSet = new Set();
+    state.categories = Array.isArray(state.categories)
+      ? state.categories
+        .filter((category) => category && typeof category.id === "string" && typeof category.name === "string")
+        .map((category) => ({
+          id: category.id.trim().toLowerCase(),
+          name: category.name.trim()
+        }))
+        .filter((category) => {
+          if (!category.id || !category.name || categoryIdSet.has(category.id)) return false;
+          categoryIdSet.add(category.id);
+          return true;
+        })
+      : [];
+
+    const validCategoryIds = new Set(state.categories.map((category) => category.id));
+    const codeSet = new Set();
+    state.products = Array.isArray(state.products)
+      ? state.products
+        .filter((product) => (
+          product
+          && typeof product.titulo === "string"
+          && typeof product.code === "string"
+          && typeof product.categoryId === "string"
+          && typeof product.description === "string"
+        ))
+        .map((product) => {
+          const rawAuthor = typeof product.author === "string"
+            ? product.author
+            : (typeof product.autor === "string" ? product.autor : "");
+
+          return {
+            titulo: product.titulo.trim(),
+            author: rawAuthor.trim() || "Autor desconocido",
+            code: product.code.trim(),
+            categoryId: product.categoryId.trim().toLowerCase(),
+            description: product.description.trim(),
+            price: Number.parseFloat(product.price),
+            stock: Number.parseInt(product.stock, 10),
+            image: buildImagePath(product.image)
+          };
+        })
+        .filter((product) => {
+          if (
+            !product.titulo
+            || !product.author
+            || !product.code
+            || !product.categoryId
+            || !product.description
+            || !validCategoryIds.has(product.categoryId)
+            || Number.isNaN(product.price)
+            || Number.isNaN(product.stock)
+            || product.price < 0
+            || product.stock < 0
+            || codeSet.has(product.code.toLowerCase())
+          ) {
+            return false;
+          }
+          codeSet.add(product.code.toLowerCase());
+          return true;
+        })
+      : [];
+
+    const validCodes = new Set(state.products.map((product) => product.code));
+    const nextCart = {};
+    if (state.cart && typeof state.cart === "object") {
+      Object.entries(state.cart).forEach(([code, quantity]) => {
+        const parsedQuantity = Number.parseInt(quantity, 10);
+        if (validCodes.has(code) && Number.isInteger(parsedQuantity) && parsedQuantity > 0) {
+          nextCart[code] = parsedQuantity;
+        }
+      });
+    }
+    state.cart = nextCart;
+
+    const visibility = state.categoryVisibility && typeof state.categoryVisibility === "object"
+      ? state.categoryVisibility
+      : {};
+    const nextVisibility = {};
+    state.categories.forEach((category) => {
+      nextVisibility[category.id] = visibility[category.id] !== false;
+    });
+    state.categoryVisibility = nextVisibility;
+
+    state.cartVisible = state.cartVisible !== false;
+    state.catalogSearchQuery = typeof state.catalogSearchQuery === "string"
+      ? state.catalogSearchQuery.trim()
+      : "";
+
+    const validSorts = new Set(["default", "titulo-asc", "titulo-desc", "precio-asc", "precio-desc"]);
+    state.catalogSortBy = validSorts.has(state.catalogSortBy) ? state.catalogSortBy : "default";
+  }
+
+  function saveStateToStorage() {
+    try {
+      const snapshot = {
+        categories: state.categories,
+        products: state.products,
+        cart: state.cart,
+        cartVisible: state.cartVisible,
+        categoryVisibility: state.categoryVisibility,
+        catalogSearchQuery: state.catalogSearchQuery,
+        catalogSortBy: state.catalogSortBy
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    } catch (error) {
+      console.warn("No se pudo guardar el estado en localStorage.", error);
+    }
+  }
+
+  function loadStateFromStorage() {
+    try {
+      const rawState = window.localStorage.getItem(STORAGE_KEY);
+      if (!rawState) return false;
+
+      const parsedState = JSON.parse(rawState);
+      if (!parsedState || typeof parsedState !== "object") return false;
+
+      state.categories = parsedState.categories;
+      state.products = parsedState.products;
+      state.cart = parsedState.cart;
+      state.cartVisible = parsedState.cartVisible;
+      state.categoryVisibility = parsedState.categoryVisibility;
+      state.catalogSearchQuery = parsedState.catalogSearchQuery;
+      state.catalogSortBy = parsedState.catalogSortBy;
+
+      normalizeState();
+      return true;
+    } catch (error) {
+      console.warn("No se pudo cargar el estado desde localStorage.", error);
+      return false;
+    }
   }
 
   function escapeHtml(value) {
@@ -114,6 +338,7 @@
       filtered = filtered.filter((product) => {
         const searchableText = [
           product.titulo,
+          product.author,
           product.description,
           product.code
         ]
@@ -144,16 +369,56 @@
   }
 
   function showSystemMessage(text, type) {
-    const $message = $("#systemMessage");
-    $message
-      .removeClass("d-none alert-success alert-danger alert-warning alert-info")
-      .addClass(`alert-${type}`)
-      .text(text);
+    const variantMap = {
+      success: "success",
+      danger: "danger",
+      warning: "warning",
+      info: "info"
+    };
+    showToast(text, {
+      title: "Sistema",
+      variant: variantMap[type] || "success",
+      delay: type === "danger" ? 3200 : 2600
+    });
+  }
 
-    clearTimeout(showSystemMessage.timeoutId);
-    showSystemMessage.timeoutId = setTimeout(() => {
-      $message.addClass("d-none");
-    }, 3500);
+  function resolveToastVariantClass(variant) {
+    switch (variant) {
+      case "success":
+        return "text-bg-success";
+      case "danger":
+        return "text-bg-danger";
+      case "warning":
+        return "text-bg-warning";
+      case "info":
+        return "text-bg-primary";
+      default:
+        return "text-bg-dark";
+    }
+  }
+
+  function showToast(message, { title = "Entre Lineas", variant = "success", delay = 2600 } = {}) {
+    const container = document.getElementById("toastContainer");
+    if (!container || !window.bootstrap?.Toast) return;
+
+    const toastId = `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const toastHtml = `
+      <div id="${toastId}" class="toast ${resolveToastVariantClass(variant)} border-0" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="${delay}">
+        <div class="d-flex">
+          <div class="toast-body">
+            <strong class="me-2">${escapeHtml(title)}</strong>${escapeHtml(message)}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+        </div>
+      </div>`;
+
+    $(container).append(toastHtml);
+    const toastElement = document.getElementById(toastId);
+    const toastInstance = bootstrap.Toast.getOrCreateInstance(toastElement, { delay, autohide: true });
+    toastElement.addEventListener("hidden.bs.toast", () => {
+      $(toastElement).remove();
+    }, { once: true });
+    toastInstance.show();
   }
 
   function showAdminMessage(text, isError) {
@@ -204,16 +469,47 @@
   }
 
   function buildCategoryQuickNav(selectedId = "") {
-    const options = [
-      '<option value="">Selecciona una categoría...</option>',
-      ...state.categories.map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`)
-    ].join("");
+    const $quickNav = $(".category-quick-nav");
+    const $trigger = $("#categoryQuickNavBtn");
+    const $triggerLabel = $trigger.find(".btn-label");
+    const $menu = $("#categoryQuickNavMenu");
 
-    const $quickNav = $("#categoryQuickNav");
-    $quickNav.html(options);
-    if (selectedId && categoryIdExists(selectedId)) {
-      $quickNav.val(selectedId);
+    if (state.categories.length === 0) {
+      $menu.html('<span class="category-fan-empty">No hay categorías disponibles</span>');
+      $trigger.prop("disabled", true);
+      $triggerLabel.text("Categoría");
+      setCategoryQuickNavOpen(false);
+      return;
     }
+
+    const options = state.categories
+      .map((category, index) => `
+        <button
+          type="button"
+          class="category-fan-item ${selectedId === category.id ? "is-active" : ""}"
+          data-category-id="${escapeHtml(category.id)}"
+          role="menuitem"
+          style="--item-index:${index};">
+          ${escapeHtml(category.name)}
+        </button>`)
+      .join("");
+
+    $menu.html(options);
+    $trigger.prop("disabled", false);
+
+    const selectedCategory = selectedId && categoryIdExists(selectedId)
+      ? findCategory(selectedId)
+      : null;
+    $triggerLabel.text(selectedCategory ? `Categoría: ${selectedCategory.name}` : "Categoría");
+    $quickNav.removeClass("is-open");
+    $trigger.attr("aria-expanded", "false");
+  }
+
+  function setCategoryQuickNavOpen(isOpen) {
+    const $quickNav = $(".category-quick-nav");
+    const $trigger = $("#categoryQuickNavBtn");
+    $quickNav.toggleClass("is-open", isOpen);
+    $trigger.attr("aria-expanded", isOpen ? "true" : "false");
   }
 
   function extractImageFileName(imagePath) {
@@ -258,6 +554,47 @@
     $select.val(nextCode);
   }
 
+  function setInlineFieldError(inputSelector, errorSelector, message) {
+    const hasError = Boolean(message);
+    $(inputSelector).toggleClass("is-invalid", hasError);
+    const $error = $(errorSelector);
+    $error.toggleClass("d-none", !hasError);
+    $error.text(hasError ? message : "");
+  }
+
+  function validateUniqueAdminIdentifiers() {
+    const newCategoryId = $("#categoryId").val().trim().toLowerCase();
+    const newCategoryDuplicate = Boolean(newCategoryId) && categoryIdExists(newCategoryId);
+    setInlineFieldError("#categoryId", "#categoryIdDuplicateError", newCategoryDuplicate ? "Ese identificador de categoria ya existe." : "");
+    $("#categoryForm button[type='submit']").prop("disabled", newCategoryDuplicate);
+
+    const hasCategories = state.categories.length > 0;
+    const newProductCode = $("#productCode").val().trim();
+    const newProductDuplicate = Boolean(newProductCode) && productCodeExists(newProductCode);
+    setInlineFieldError("#productCode", "#productCodeDuplicateError", newProductDuplicate ? "Ese codigo de producto ya existe." : "");
+    $("#productForm button[type='submit']").prop("disabled", !hasCategories || newProductDuplicate);
+
+    const selectedCategoryId = String($("#editCategorySelect").val() || "").toLowerCase();
+    const hasEditableCategory = Boolean(findCategory(selectedCategoryId));
+    const editCategoryId = $("#editCategoryId").val().trim().toLowerCase();
+    const editCategoryDuplicate = hasEditableCategory
+      && Boolean(editCategoryId)
+      && editCategoryId !== selectedCategoryId
+      && categoryIdExists(editCategoryId);
+    setInlineFieldError("#editCategoryId", "#editCategoryIdDuplicateError", editCategoryDuplicate ? "Ese identificador de categoria ya existe." : "");
+    $("#categoryEditForm button[type='submit']").prop("disabled", !hasEditableCategory || editCategoryDuplicate);
+
+    const selectedProductCode = String($("#editProductSelect").val() || "");
+    const hasEditableProduct = Boolean(findProduct(selectedProductCode));
+    const editProductCode = $("#editProductCode").val().trim();
+    const editProductDuplicate = hasEditableProduct
+      && Boolean(editProductCode)
+      && editProductCode.toLowerCase() !== selectedProductCode.toLowerCase()
+      && productCodeExists(editProductCode);
+    setInlineFieldError("#editProductCode", "#editProductCodeDuplicateError", editProductDuplicate ? "Ese codigo de producto ya existe." : "");
+    $("#productEditForm button[type='submit']").prop("disabled", !hasEditableProduct || editProductDuplicate);
+  }
+
   function syncCategoryEditorFields() {
     const selectedId = $("#editCategorySelect").val();
     const category = findCategory(selectedId);
@@ -268,11 +605,13 @@
     if (!category) {
       $("#editCategoryId").val("");
       $("#editCategoryName").val("");
+      validateUniqueAdminIdentifiers();
       return;
     }
 
     $("#editCategoryId").val(category.id);
     $("#editCategoryName").val(category.name);
+    validateUniqueAdminIdentifiers();
   }
 
   function syncProductEditorFields() {
@@ -280,26 +619,30 @@
     const product = findProduct(selectedCode);
     const disabled = !product;
 
-    $("#editProductTitle, #editProductCode, #editProductCategory, #editProductDescription, #editProductPrice, #editProductStock, #editProductImageName, #deleteProductBtn, #productEditForm button[type='submit']").prop("disabled", disabled);
+    $("#editProductTitle, #editProductAuthor, #editProductCode, #editProductCategory, #editProductDescription, #editProductPrice, #editProductStock, #editProductImageName, #deleteProductBtn, #productEditForm button[type='submit']").prop("disabled", disabled);
 
     if (!product) {
       $("#editProductTitle").val("");
+      $("#editProductAuthor").val("");
       $("#editProductCode").val("");
       $("#editProductCategory").val("");
       $("#editProductDescription").val("");
       $("#editProductPrice").val("");
       $("#editProductStock").val("");
       $("#editProductImageName").val("");
+      validateUniqueAdminIdentifiers();
       return;
     }
 
     $("#editProductTitle").val(product.titulo);
+    $("#editProductAuthor").val(product.author || "");
     $("#editProductCode").val(product.code);
     $("#editProductCategory").val(product.categoryId);
     $("#editProductDescription").val(product.description);
     $("#editProductPrice").val(product.price.toFixed(2));
     $("#editProductStock").val(product.stock);
     $("#editProductImageName").val(extractImageFileName(product.image));
+    validateUniqueAdminIdentifiers();
   }
 
   function refreshAdminEditors(selectedCategoryId = "", selectedProductCode = "") {
@@ -312,12 +655,14 @@
 
     const hasCategories = state.categories.length > 0;
     $("#productCategory, #productForm button[type='submit']").prop("disabled", !hasCategories);
+    validateUniqueAdminIdentifiers();
   }
 
   function openAndFocusCategory(categoryId) {
     if (!categoryId || !categoryIdExists(categoryId)) return;
 
     state.categoryVisibility[categoryId] = true;
+    saveStateToStorage();
     renderProducts();
 
     const $targetCard = $("#productsContainer .category-card")
@@ -364,6 +709,7 @@
                 <div>
                   <p class="product-code mb-1">Código: <strong>${escapeHtml(product.code)}</strong></p>
                   <p class="mb-1"><strong>${escapeHtml(product.titulo)}</strong></p>
+                  <p class="mb-1">Autor: <strong>${escapeHtml(product.author || "Autor desconocido")}</strong></p>
                   <p class="product-desc">${escapeHtml(product.description)}</p>
                   <p class="mb-1">Precio: <strong>${formatCurrency(product.price)}</strong></p>
                   <p class="mb-2">Stock disponible: <strong>${product.stock}</strong></p>
@@ -404,6 +750,23 @@
     }, 0);
   }
 
+  function calculateCartUnits() {
+    return Object.values(state.cart).reduce((acc, quantity) => acc + quantity, 0);
+  }
+
+  function renderCartBadge() {
+    const totalUnits = calculateCartUnits();
+    const $badge = $("#cartCountBadge");
+    $badge.text(totalUnits);
+    $badge.toggleClass("is-empty", totalUnits <= 0);
+    $("#toggleCartBtn").attr(
+      "aria-label",
+      totalUnits > 0
+        ? `Cesta con ${totalUnits} producto(s)`
+        : "Cesta vacia"
+    );
+  }
+
   function renderCart() {
     const $cartItems = $("#cartItems");
     const items = Object.entries(state.cart);
@@ -422,6 +785,7 @@
               <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.titulo)}">
               <div>
                 <p class="mb-1"><strong>${escapeHtml(product.titulo)}</strong></p>
+                <small>Autor: ${escapeHtml(product.author || "Autor desconocido")}</small><br>
                 <small>${escapeHtml(product.description)}</small><br>
                 <small>Código: ${escapeHtml(product.code)}</small><br>
                 <small>Precio unidad: ${formatCurrency(product.price)}</small><br>
@@ -440,9 +804,10 @@
     $("#cartTotal").text(formatCurrency(calculateTotal()));
     $("#placeOrderBtn").prop("disabled", items.length === 0);
     $("#clearCartBtn").prop("disabled", items.length === 0);
+    renderCartBadge();
   }
 
-  function setCartVisibility(visible) {
+  function setCartVisibility(visible, shouldPersist = true) {
     state.cartVisible = visible;
     const $cartColumn = $("#cartColumn");
     const $productsColumn = $("#productsColumn");
@@ -457,26 +822,51 @@
       $productsColumn.removeClass("col-lg-8").addClass("col-12");
       $label.text("Mostrar cesta");
     }
+
+    if (shouldPersist) {
+      saveStateToStorage();
+    }
   }
 
   function clearOrderMessage() {
-    $("#orderConfirmation").addClass("d-none").text("");
+    const modalElement = document.getElementById("orderSuccessModal");
+    const modalBody = document.getElementById("orderSuccessModalBody");
+
+    if (modalBody) {
+      modalBody.innerHTML = "";
+    }
+
+    if (modalElement && window.bootstrap?.Modal) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+      modal.hide();
+    }
+  }
+
+  function showOrderSuccessModal(summaryHtml) {
+    const modalElement = document.getElementById("orderSuccessModal");
+    const modalBody = document.getElementById("orderSuccessModalBody");
+    if (!modalElement || !modalBody || !window.bootstrap?.Modal) return;
+
+    modalBody.innerHTML = summaryHtml;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
   }
 
   function addToCart(code) {
     const product = findProduct(code);
-    if (!product) return;
-    if (product.stock <= 0) {
-      showSystemMessage("No queda stock de este producto.", "warning");
-      return;
-    }
+    if (!product || product.stock <= 0) return;
+
+    $(`button[data-code="${code}"]`).addClass('btn-success').text('¡Añadido!');
+    setTimeout(() => {
+      renderProducts();
+    }, 800);
 
     product.stock -= 1;
     state.cart[code] = (state.cart[code] || 0) + 1;
 
-    clearOrderMessage();
-    renderProducts();
     renderCart();
+    saveStateToStorage();
+    showToast(`"${product.titulo}" agregado a la cesta.`, { title: "Cesta", variant: "success" });
   }
 
   function removeFromCart(code) {
@@ -495,21 +885,57 @@
     clearOrderMessage();
     renderProducts();
     renderCart();
+    saveStateToStorage();
   }
 
-  function placeOrder() {
+  async function placeOrder() {
     const total = calculateTotal();
+    const totalUnits = calculateCartUnits();
+
     if (total <= 0) {
-      showSystemMessage("Tu cesta está vacía. Agrega productos antes de pedir.", "warning");
+      showSystemMessage("Tu cesta está vacía. Agrega libros antes de pedir.", "warning");
       return;
     }
 
+    const confirmed = await askForConfirmation({
+      title: "Confirmar pedido",
+      message: `¿Deseas realizar este pedido por un total de ${formatCurrency(total)}?`,
+      confirmText: "Realizar pedido",
+      confirmButtonClass: "btn-success"
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const summaryHtml = `
+        <div class="order-confirmation-card">
+            <div class="success-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h4>¡Gracias por tu compra!</h4>
+            <p class="small text-muted">Tu pedido en <strong>Entre Líneas</strong> ha sido procesado con éxito.</p>
+            
+            <div class="order-summary-box">
+                <div class="order-summary-item">
+                    <span>Libros adquiridos:</span>
+                    <strong>${totalUnits}</strong>
+                </div>
+                <div class="order-summary-item">
+                    <span>Total abonado:</span>
+                    <strong class="text-success">${formatCurrency(total)}</strong>
+                </div>
+            </div>
+            
+            <p class="mt-3 mb-0 small italic">Recibirás un correo con los detalles del envío.</p>
+        </div>
+    `;
+
     state.cart = {};
     renderCart();
-    clearOrderMessage();
-    $("#orderConfirmation")
-      .removeClass("d-none")
-      .text(`Pedido confirmado. Gracias por comprar en Entre Lineas. Total: ${formatCurrency(total)}.`);
+    saveStateToStorage();
+    showOrderSuccessModal(summaryHtml);
+
     showSystemMessage("Pedido realizado correctamente.", "success");
   }
 
@@ -542,6 +968,7 @@
     clearOrderMessage();
     renderProducts();
     renderCart();
+    saveStateToStorage();
     showSystemMessage("Cesta vaciada correctamente.", "success");
   }
 
@@ -555,6 +982,7 @@
     }
 
     showAdminMessage("Modo administrador activo.", false);
+    showToast("Modo administrador activo.", { title: "Administracion", variant: "success" });
     const modalElement = document.getElementById("adminModal");
     const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
     modal.show();
@@ -588,14 +1016,18 @@
     state.categoryVisibility[normalizedId] = true;
     refreshAdminEditors(normalizedId, $("#editProductSelect").val());
     renderProducts();
+    saveStateToStorage();
     showAdminMessage(`Categoria "${rawName}" creada correctamente.`, false);
+    showToast(`Categoria "${rawName}" creada.`, { title: "Administracion", variant: "success" });
     event.target.reset();
+    validateUniqueAdminIdentifiers();
   }
 
   function addProduct(event) {
     event.preventDefault();
 
     const titulo = $("#productTitle").val().trim();
+    const author = $("#productAuthor").val().trim();
     const code = $("#productCode").val().trim();
     const categoryId = $("#productCategory").val();
     const description = $("#productDescription").val().trim();
@@ -603,7 +1035,7 @@
     const stock = Number.parseInt($("#productStock").val(), 10);
     const imageName = $("#productImageName").val().trim();
 
-    if (!titulo || !code || !categoryId || !description || Number.isNaN(price) || Number.isNaN(stock)) {
+    if (!titulo || !author || !code || !categoryId || !description || Number.isNaN(price) || Number.isNaN(stock)) {
       showAdminMessage("Completa todos los campos obligatorios del producto.", true);
       return;
     }
@@ -625,6 +1057,7 @@
 
     state.products.push({
       titulo,
+      author,
       code,
       categoryId,
       description,
@@ -635,8 +1068,11 @@
 
     refreshAdminEditors(categoryId, code);
     renderProducts();
+    saveStateToStorage();
     showAdminMessage(`Producto "${code}" agregado correctamente.`, false);
+    showToast(`Producto "${code}" agregado.`, { title: "Administracion", variant: "success" });
     event.target.reset();
+    validateUniqueAdminIdentifiers();
   }
 
   function updateCategory(event) {
@@ -680,7 +1116,9 @@
 
     refreshAdminEditors(nextCategoryId, $("#editProductSelect").val());
     renderProducts();
+    saveStateToStorage();
     showAdminMessage(`Categoría "${nextCategoryName}" actualizada correctamente.`, false);
+    showToast(`Categoria "${nextCategoryName}" actualizada.`, { title: "Administracion", variant: "success" });
   }
 
   async function deleteCategory() {
@@ -722,7 +1160,9 @@
     refreshAdminEditors(nextCategoryId, nextProductCode);
     renderProducts();
     renderCart();
+    saveStateToStorage();
     showAdminMessage(`Categoría "${category.name}" eliminada correctamente.`, false);
+    showToast(`Categoria "${category.name}" eliminada.`, { title: "Administracion", variant: "success" });
   }
 
   function updateProduct(event) {
@@ -736,6 +1176,7 @@
     }
 
     const nextTitle = $("#editProductTitle").val().trim();
+    const nextAuthor = $("#editProductAuthor").val().trim();
     const nextCode = $("#editProductCode").val().trim();
     const nextCategoryId = $("#editProductCategory").val();
     const nextDescription = $("#editProductDescription").val().trim();
@@ -743,7 +1184,7 @@
     const nextStock = Number.parseInt($("#editProductStock").val(), 10);
     const nextImageName = $("#editProductImageName").val().trim();
 
-    if (!nextTitle || !nextCode || !nextCategoryId || !nextDescription || Number.isNaN(nextPrice) || Number.isNaN(nextStock)) {
+    if (!nextTitle || !nextAuthor || !nextCode || !nextCategoryId || !nextDescription || Number.isNaN(nextPrice) || Number.isNaN(nextStock)) {
       showAdminMessage("Completa todos los campos obligatorios del producto.", true);
       return;
     }
@@ -765,6 +1206,7 @@
 
     const oldCode = product.code;
     product.titulo = nextTitle;
+    product.author = nextAuthor;
     product.code = nextCode;
     product.categoryId = nextCategoryId;
     product.description = nextDescription;
@@ -780,7 +1222,9 @@
     refreshAdminEditors(nextCategoryId, nextCode);
     renderProducts();
     renderCart();
+    saveStateToStorage();
     showAdminMessage(`Producto "${nextCode}" actualizado correctamente.`, false);
+    showToast(`Producto "${nextCode}" actualizado.`, { title: "Administracion", variant: "success" });
   }
 
   async function deleteProduct() {
@@ -810,7 +1254,9 @@
     refreshAdminEditors(nextCategoryId, nextProductCode);
     renderProducts();
     renderCart();
+    saveStateToStorage();
     showAdminMessage(`Producto "${product.code}" eliminado correctamente.`, false);
+    showToast(`Producto "${product.code}" eliminado.`, { title: "Administracion", variant: "success" });
   }
 
   function bindEvents() {
@@ -821,18 +1267,16 @@
 
     $("#productsContainer").on("click", ".category-toggle", function onCategoryToggle() {
       const categoryId = $(this).data("category-id");
-      const $categoryCard = $(this).closest(".category-card");
-      const $products = $categoryCard.find(".category-products");
+      const $products = $(this).next(".category-products");
       const $indicator = $(this).find(".toggle-indicator");
       const isOpen = state.categoryVisibility[categoryId] !== false;
 
       state.categoryVisibility[categoryId] = !isOpen;
+      saveStateToStorage();
+
       $indicator.text(isOpen ? "+" : "-");
-      if (isOpen) {
-        $products.stop(true, true).slideUp(220);
-      } else {
-        $products.stop(true, true).slideDown(220);
-      }
+
+      $products.stop(true, true).slideToggle(450, "swing");
     });
 
     $("#cartItems").on("click", ".remove-from-cart", function onRemoveClick() {
@@ -850,22 +1294,41 @@
     $("#categoryForm").on("submit", addCategory);
     $("#categoryEditForm").on("submit", updateCategory);
     $("#editCategorySelect").on("change", syncCategoryEditorFields);
+    $("#categoryId, #productCode, #editCategoryId, #editProductCode").on("input", validateUniqueAdminIdentifiers);
     $("#deleteCategoryBtn").on("click", deleteCategory);
     $("#productForm").on("submit", addProduct);
     $("#productEditForm").on("submit", updateProduct);
     $("#editProductSelect").on("change", syncProductEditorFields);
     $("#deleteProductBtn").on("click", deleteProduct);
-    $("#categoryQuickNav").on("change", function onCategoryQuickNavChange() {
-      const selectedCategoryId = $(this).val();
+    $("#categoryQuickNavBtn").on("click", function onCategoryQuickNavTriggerClick(event) {
+      event.stopPropagation();
+      const isOpen = $(".category-quick-nav").hasClass("is-open");
+      setCategoryQuickNavOpen(!isOpen);
+    });
+    $("#categoryQuickNavMenu").on("click", ".category-fan-item", function onCategoryQuickNavItemClick() {
+      const selectedCategoryId = $(this).data("category-id");
+      buildCategoryQuickNav(selectedCategoryId);
       openAndFocusCategory(selectedCategoryId);
+      setCategoryQuickNavOpen(false);
+    });
+    $(document).on("click", function onDocumentClick(event) {
+      if ($(event.target).closest(".category-quick-nav").length > 0) return;
+      setCategoryQuickNavOpen(false);
+    });
+    $(document).on("keydown", function onDocumentKeydown(event) {
+      if (event.key === "Escape") {
+        setCategoryQuickNavOpen(false);
+      }
     });
     $("#catalogSearch").on("input", function onCatalogSearchInput() {
       state.catalogSearchQuery = $(this).val().trim();
       renderProducts();
+      saveStateToStorage();
     });
     $("#catalogSort").on("change", function onCatalogSortChange() {
       state.catalogSortBy = $(this).val();
       renderProducts();
+      saveStateToStorage();
     });
     $("#confirmActionBtn").on("click", function onConfirmActionClick() {
       if (!confirmModalResolver) return;
@@ -885,12 +1348,19 @@
   }
 
   function init() {
-    bootstrapData();
+    const loadedFromStorage = loadStateFromStorage();
+    if (!loadedFromStorage) {
+      bootstrapData();
+      normalizeState();
+    }
+    saveStateToStorage();
+
     refreshAdminEditors();
+    $("#catalogSearch").val(state.catalogSearchQuery);
     $("#catalogSort").val(state.catalogSortBy);
     renderProducts();
     renderCart();
-    setCartVisibility(true);
+    setCartVisibility(state.cartVisible, false);
     bindEvents();
   }
 
