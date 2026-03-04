@@ -25,6 +25,7 @@
     catalogSearchQuery: "",
     catalogSortBy: "default"
   };
+  const DESKTOP_LAYOUT_QUERY = "(min-width: 992px)";
   let confirmModalResolver = null;
 
   function buildImagePath(fileName) {
@@ -326,6 +327,16 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#39;");
+  }
+
+  function toCategoryClassName(categoryId) {
+    const normalized = String(categoryId || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    return normalized ? `cat-${normalized}` : "cat-default";
   }
 
   function formatCurrency(value) {
@@ -743,8 +754,9 @@
           .join("");
       }
 
+      const categoryClassName = toCategoryClassName(category.id);
       const categoryHtml = `
-        <article class="category-card card shadow-sm mb-3" data-category-id="${escapeHtml(category.id)}">
+        <article class="category-card card shadow-sm mb-3 ${categoryClassName}" data-category-id="${escapeHtml(category.id)}">
           <button type="button" class="category-header category-toggle" data-category-id="${escapeHtml(category.id)}">
             <span class="category-header-main">
               ${getCategoryIconMarkup(category.id)}
@@ -839,20 +851,41 @@
     renderCartBadge();
   }
 
-  function setCartVisibility(visible, shouldPersist = true) {
+  function isDesktopLayout() {
+    return window.matchMedia(DESKTOP_LAYOUT_QUERY).matches;
+  }
+
+  function setCartVisibility(visible, shouldPersist = true, animate = true) {
     state.cartVisible = visible;
+    const $layout = $("#catalogLayout");
     const $cartColumn = $("#cartColumn");
     const $productsColumn = $("#productsColumn");
     const $label = $("#toggleCartBtn .btn-label");
 
     if (visible) {
-      $cartColumn.removeClass("d-none");
-      $productsColumn.removeClass("col-12").addClass("col-lg-8");
       $label.text("Ocultar cesta");
     } else {
+      $label.text("Mostrar cesta");
+    }
+
+    if (isDesktopLayout()) {
+      $cartColumn.removeClass("d-none");
+      $productsColumn.removeClass("col-12").addClass("col-lg-8");
+      $layout.toggleClass("cart-no-anim", !animate);
+      $layout.toggleClass("cart-is-hidden", !visible);
+      if (!animate) {
+        window.requestAnimationFrame(() => {
+          $layout.removeClass("cart-no-anim");
+        });
+      }
+    } else if (visible) {
+      $layout.removeClass("cart-is-hidden cart-no-anim");
+      $cartColumn.removeClass("d-none");
+      $productsColumn.removeClass("col-12").addClass("col-lg-8");
+    } else {
+      $layout.removeClass("cart-is-hidden cart-no-anim");
       $cartColumn.addClass("d-none");
       $productsColumn.removeClass("col-lg-8").addClass("col-12");
-      $label.text("Mostrar cesta");
     }
 
     if (shouldPersist) {
@@ -1414,6 +1447,16 @@
       confirmModalResolver = null;
       resolve(false);
     });
+
+    const desktopMediaQuery = window.matchMedia(DESKTOP_LAYOUT_QUERY);
+    const handleDesktopLayoutChange = () => {
+      setCartVisibility(state.cartVisible, false, false);
+    };
+    if (typeof desktopMediaQuery.addEventListener === "function") {
+      desktopMediaQuery.addEventListener("change", handleDesktopLayoutChange);
+    } else if (typeof desktopMediaQuery.addListener === "function") {
+      desktopMediaQuery.addListener(handleDesktopLayoutChange);
+    }
   }
 
   function init() {
@@ -1429,7 +1472,7 @@
     $("#catalogSort").val(state.catalogSortBy);
     renderProducts();
     renderCart();
-    setCartVisibility(state.cartVisible, false);
+    setCartVisibility(state.cartVisible, false, false);
     bindEvents();
   }
 
