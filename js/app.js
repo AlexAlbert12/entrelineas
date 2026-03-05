@@ -593,16 +593,45 @@
     $error.text(hasError ? message : "");
   }
 
+  function setCodeFieldLiveFeedback(inputSelector, iconSelector, hasValue, isDuplicate) {
+    const $input = $(inputSelector);
+    const $icon = $(iconSelector);
+
+    $input.removeClass("is-valid");
+    $icon
+      .removeClass("bi-check-circle-fill bi-x-circle-fill text-success text-danger opacity-100")
+      .addClass("opacity-0");
+
+    if (!hasValue) return;
+
+    if (isDuplicate) {
+      $input.addClass("is-invalid");
+      $icon
+        .removeClass("opacity-0")
+        .addClass("bi-x-circle-fill text-danger opacity-100");
+      return;
+    }
+
+    $input.addClass("is-valid");
+    $icon
+      .removeClass("opacity-0")
+      .addClass("bi-check-circle-fill text-success opacity-100");
+  }
+
   function validateUniqueAdminIdentifiers() {
     const newCategoryId = $("#categoryId").val().trim().toLowerCase();
     const newCategoryDuplicate = Boolean(newCategoryId) && categoryIdExists(newCategoryId);
+    const newCategoryName = $("#categoryName").val().trim();
+    const newCategoryNameDuplicate = Boolean(newCategoryName) && categoryNameExists(newCategoryName);
     setInlineFieldError("#categoryId", "#categoryIdDuplicateError", newCategoryDuplicate ? "Ese identificador de categoria ya existe." : "");
-    $("#categoryForm button[type='submit']").prop("disabled", newCategoryDuplicate);
+    setInlineFieldError("#categoryName", "#categoryNameDuplicateError", newCategoryNameDuplicate ? "Ese nombre de categoria ya existe." : "");
+    $("#categoryForm button[type='submit']").prop("disabled", newCategoryDuplicate || newCategoryNameDuplicate);
 
     const hasCategories = state.categories.length > 0;
     const newProductCode = $("#productCode").val().trim();
     const newProductDuplicate = Boolean(newProductCode) && productCodeExists(newProductCode);
     setInlineFieldError("#productCode", "#productCodeDuplicateError", newProductDuplicate ? "Ese codigo de producto ya existe." : "");
+    setCodeFieldLiveFeedback("#productCode", "#productCodeStatusIcon", Boolean(newProductCode), newProductDuplicate);
     $("#productForm button[type='submit']").prop("disabled", !hasCategories || newProductDuplicate);
 
     const selectedCategoryId = String($("#editCategorySelect").val() || "").toLowerCase();
@@ -623,6 +652,7 @@
       && editProductCode.toLowerCase() !== selectedProductCode.toLowerCase()
       && productCodeExists(editProductCode);
     setInlineFieldError("#editProductCode", "#editProductCodeDuplicateError", editProductDuplicate ? "Ese codigo de producto ya existe." : "");
+    setCodeFieldLiveFeedback("#editProductCode", "#editProductCodeStatusIcon", Boolean(editProductCode), editProductDuplicate);
     $("#productEditForm button[type='submit']").prop("disabled", !hasEditableProduct || editProductDuplicate);
   }
 
@@ -723,11 +753,11 @@
         hasVisibleProducts = true;
       }
 
-      let productsHtml = "";
+      let productsContentHtml = "";
       if (relatedProducts.length === 0) {
-        productsHtml = '<p class="text-muted mb-1">No hay productos en esta categoria.</p>';
+        productsContentHtml = '<p class="text-muted mb-1 category-empty-note">No hay productos en esta categoria.</p>';
       } else {
-        productsHtml = relatedProducts
+        productsContentHtml = relatedProducts
           .map((product) => {
             const outOfStock = product.stock <= 0;
             const buttonClasses = outOfStock ? "btn cart-add-btn disabled-link" : "btn cart-add-btn";
@@ -756,7 +786,7 @@
 
       const categoryClassName = toCategoryClassName(category.id);
       const categoryHtml = `
-        <article class="category-card card shadow-sm mb-3 ${categoryClassName}" data-category-id="${escapeHtml(category.id)}">
+        <article class="category-card card shadow-sm mb-3 ${categoryClassName} layout-list" data-category-id="${escapeHtml(category.id)}">
           <button type="button" class="category-header category-toggle" data-category-id="${escapeHtml(category.id)}">
             <span class="category-header-main">
               ${getCategoryIconMarkup(category.id)}
@@ -765,7 +795,9 @@
             <span class="toggle-indicator" aria-hidden="true">${isOpen ? "-" : "+"}</span>
           </button>
           <div class="category-products" style="display:${isOpen ? "block" : "none"};">
-            ${productsHtml}
+            <div class="category-products-track">
+              ${productsContentHtml}
+            </div>
           </div>
         </article>`;
 
@@ -1085,6 +1117,11 @@
     return state.categories.some((category) => category.id.toLowerCase() === id.toLowerCase());
   }
 
+  function categoryNameExists(name) {
+    const normalizedName = normalizeSearchText(name);
+    return state.categories.some((category) => normalizeSearchText(category.name) === normalizedName);
+  }
+
   function productCodeExists(code) {
     return state.products.some((product) => product.code.toLowerCase() === code.toLowerCase());
   }
@@ -1102,6 +1139,11 @@
 
     if (categoryIdExists(normalizedId)) {
       showAdminMessage("Ese identificador de categoria ya existe.", true);
+      return;
+    }
+
+    if (categoryNameExists(rawName)) {
+      showAdminMessage("Ese nombre de categoria ya existe.", true);
       return;
     }
 
@@ -1352,6 +1394,39 @@
     showToast(`Producto "${product.code}" eliminado.`, { title: "Administracion", variant: "success" });
   }
 
+  async function resetDataToDefaults() {
+    const confirmed = await askForConfirmation({
+      title: "Reiniciar datos",
+      message: "Se restaurarán categorías, productos, stock, cesta y filtros al estado inicial. ¿Continuar?",
+      confirmText: "Reiniciar datos",
+      confirmButtonClass: "btn-warning"
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    bootstrapData();
+    state.cartVisible = true;
+    state.catalogSearchQuery = "";
+    state.catalogSortBy = "default";
+    normalizeState();
+
+    refreshAdminEditors();
+    $("#catalogSearch").val(state.catalogSearchQuery);
+    $("#catalogSort").val(state.catalogSortBy);
+
+    clearOrderMessage();
+    renderProducts();
+    renderCart();
+    setCartVisibility(state.cartVisible, false, false);
+    saveStateToStorage();
+
+    showAdminMessage("Datos reiniciados a los valores precargados.", false);
+    showToast("Datos reiniciados correctamente.", { title: "Administracion", variant: "success" });
+    showSystemMessage("Se restauró la tienda al estado inicial.", "success");
+  }
+
   function bindEvents() {
     $("#productsContainer").on("click", ".add-to-cart", function onAddClick() {
       const code = $(this).data("code");
@@ -1396,12 +1471,13 @@
     $("#categoryForm").on("submit", addCategory);
     $("#categoryEditForm").on("submit", updateCategory);
     $("#editCategorySelect").on("change", syncCategoryEditorFields);
-    $("#categoryId, #productCode, #editCategoryId, #editProductCode").on("input", validateUniqueAdminIdentifiers);
+    $("#categoryId, #categoryName, #productCode, #editCategoryId, #editProductCode").on("input", validateUniqueAdminIdentifiers);
     $("#deleteCategoryBtn").on("click", deleteCategory);
     $("#productForm").on("submit", addProduct);
     $("#productEditForm").on("submit", updateProduct);
     $("#editProductSelect").on("change", syncProductEditorFields);
     $("#deleteProductBtn").on("click", deleteProduct);
+    $("#resetDataBtn").on("click", resetDataToDefaults);
     $("#categoryQuickNavBtn").on("click", function onCategoryQuickNavTriggerClick(event) {
       event.stopPropagation();
       const isOpen = $(".category-quick-nav").hasClass("is-open");
