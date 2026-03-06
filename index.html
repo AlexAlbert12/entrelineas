@@ -124,6 +124,18 @@
                                             maxlength="60" required>
                                         <div id="categoryNameDuplicateError" class="small text-danger mt-1 d-none" aria-live="polite"></div>
                                     </div>
+                                    <div class="mb-3">
+                                        <label for="categoryIcon" class="form-label">Icono</label>
+                                        <select id="categoryIcon" name="categoryIcon" class="form-select" required>
+                                            <option value="default" selected>Por defecto</option>
+                                            <option value="novela">Novela</option>
+                                            <option value="ensayo">Ensayo</option>
+                                            <option value="infantil">Infantil</option>
+                                            <option value="fantasia">Fantasia</option>
+                                            <option value="poesia">Poesia</option>
+                                            <option value="historia">Historia</option>
+                                        </select>
+                                    </div>
                                     <button class="btn btn-primary w-100" type="submit">Agregar categoría</button>
                                 </form>
                             </div>
@@ -167,8 +179,11 @@
                                     <div class="row g-2">
                                         <div class="col-6">
                                             <label for="productPrice" class="form-label">Precio</label>
-                                            <input id="productPrice" name="productPrice" class="form-control"
-                                                type="number" min="0" step="0.01" required>
+                                            <div class="input-group">
+                                                <input id="productPrice" name="productPrice" class="form-control"
+                                                    type="number" min="0" step="0.01" required>
+                                                <span class="input-group-text" aria-hidden="true">€</span>
+                                            </div>
                                         </div>
                                         <div class="col-6">
                                             <label for="productStock" class="form-label">Stock</label>
@@ -177,7 +192,13 @@
                                         </div>
                                     </div>
                                     <div class="mt-3 mb-3">
-                                        <label for="productImageName" class="form-label">Archivo de imagen en carpeta
+                                        <label for="productImageFile" class="form-label">Seleccionar imagen local</label>
+                                        <input id="productImageFile" name="productImageFile" class="form-control"
+                                            type="file" accept="image/*">
+                                        <div class="form-text">Puedes elegir una imagen desde tu equipo.</div>
+                                    </div>
+                                    <div class="mt-3 mb-3">
+                                        <label for="productImageName" class="form-label">O indicar archivo en carpeta
                                             img</label>
                                         <input id="productImageName" name="productImageName" class="form-control"
                                             type="text" placeholder="ejemplo.jpg">

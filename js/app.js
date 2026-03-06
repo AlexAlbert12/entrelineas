@@ -4,6 +4,7 @@
   const ADMIN_PASSWORD = "123456";
   const IMG_DIR = "img";
   const DEFAULT_IMAGE_FILE = "La-sombra-del-viento.jpg";
+  const MAX_IMAGE_UPLOAD_SIZE_BYTES = 2 * 1024 * 1024;
   const STORAGE_KEY = "entrelineas-state-v1";
   const ADD_TO_CART_ICON = '<svg height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 4)"><path d="m2.42575356.50254623 8.09559774-.00228586c.5209891-.00014706.9548019.39973175.9969972.91900932l.8938128 10.99973961c.0447299.5504704-.3652538 1.0329756-.9157242 1.0777056l-.0809907.0032851h-9.83555122c-.55228475 0-1-.4477152-1-1l.00294679-.076713.84614072-10.99745378c.0400765-.52088193.4743495-.92313949.99677087-.92328699z"/><path d="m9.5 4.5v.64527222c0 1.10456949-1.8954305 1.35472778-3 1.35472778s-3-.3954305-3-1.5v-.5"/></g></svg>';
   const CATEGORY_ICON_SVGS = Object.freeze({
@@ -15,6 +16,8 @@
     historia: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="0.2"><path d="M20,3a1,1,0,0,0,0-2H4A1,1,0,0,0,4,3H5.049c.146,1.836.743,5.75,3.194,8-2.585,2.511-3.111,7.734-3.216,10H4a1,1,0,0,0,0,2H20a1,1,0,0,0,0-2H18.973c-.105-2.264-.631-7.487-3.216-10,2.451-2.252,3.048-6.166,3.194-8Zm-6.42,7.126a1,1,0,0,0,.035,1.767c2.437,1.228,3.2,6.311,3.355,9.107H7.03c.151-2.8.918-7.879,3.355-9.107a1,1,0,0,0,.035-1.767C7.881,8.717,7.227,4.844,7.058,3h9.884C16.773,4.844,16.119,8.717,13.58,10.126ZM12,13s3,2.4,3,3.6V20H9V16.6C9,15.4,12,13,12,13Z"></path></g></svg>',
     default: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3V4z"/><path d="M8 20h10"/></g></svg>'
   });
+  const DEFAULT_CATEGORY_COLOR = "#266d51";
+  const DEFAULT_CATEGORY_ICON = "default";
 
   const state = {
     categories: [],
@@ -35,14 +38,25 @@
     return `${IMG_DIR}/${normalized}`;
   }
 
+  function isDataImageUrl(value) {
+    return /^data:image\/[a-z0-9.+-]+;base64,/i.test(String(value || "").trim());
+  }
+
+  function resolveImageSource(source) {
+    const normalized = String(source || "").trim();
+    if (!normalized) return buildImagePath("");
+    if (isDataImageUrl(normalized)) return normalized;
+    return buildImagePath(normalized);
+  }
+
   function bootstrapData() {
     state.categories = [
-      { id: "novela", name: "Novela" },
-      { id: "ensayo", name: "Ensayo" },
-      { id: "infantil", name: "Infantil" },
-      { id: "fantasia", name: "Fantasia" },
-      { id: "poesia", name: "Poesia" },
-      { id: "historia", name: "Historia" }
+      { id: "novela", name: "Novela", color: "#2d6a4f", icon: "novela" },
+      { id: "ensayo", name: "Ensayo", color: "#40916c", icon: "ensayo" },
+      { id: "infantil", name: "Infantil", color: "#47a368", icon: "infantil" },
+      { id: "fantasia", name: "Fantasia", color: "#52b765", icon: "fantasia" },
+      { id: "poesia", name: "Poesia", color: "#5ab752", icon: "poesia" },
+      { id: "historia", name: "Historia", color: "#77b752", icon: "historia" }
     ];
 
     state.products = [
@@ -190,10 +204,20 @@
     state.categories = Array.isArray(state.categories)
       ? state.categories
         .filter((category) => category && typeof category.id === "string" && typeof category.name === "string")
-        .map((category) => ({
-          id: category.id.trim().toLowerCase(),
-          name: category.name.trim()
-        }))
+        .map((category) => {
+          const normalizedId = category.id.trim().toLowerCase();
+          const configuredIcon = typeof category.icon === "string"
+            ? category.icon.trim().toLowerCase()
+            : "";
+          const fallbackIcon = CATEGORY_ICON_SVGS[normalizedId] ? normalizedId : DEFAULT_CATEGORY_ICON;
+
+          return {
+            id: normalizedId,
+            name: category.name.trim(),
+            color: normalizeHexColor(category.color),
+            icon: CATEGORY_ICON_SVGS[configuredIcon] ? configuredIcon : fallbackIcon
+          };
+        })
         .filter((category) => {
           if (!category.id || !category.name || categoryIdSet.has(category.id)) return false;
           categoryIdSet.add(category.id);
@@ -225,7 +249,7 @@
             description: product.description.trim(),
             price: Number.parseFloat(product.price),
             stock: Number.parseInt(product.stock, 10),
-            image: buildImagePath(product.image)
+            image: resolveImageSource(product.image)
           };
         })
         .filter((product) => {
@@ -329,6 +353,45 @@
       .replaceAll("'", "&#39;");
   }
 
+  function normalizeHexColor(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    return /^#[0-9a-f]{6}$/.test(normalized) ? normalized : DEFAULT_CATEGORY_COLOR;
+  }
+
+  function parseHexColor(value) {
+    const hex = normalizeHexColor(value);
+    return {
+      r: Number.parseInt(hex.slice(1, 3), 16),
+      g: Number.parseInt(hex.slice(3, 5), 16),
+      b: Number.parseInt(hex.slice(5, 7), 16)
+    };
+  }
+
+  function clampRgb(value) {
+    return Math.max(0, Math.min(255, Math.round(value)));
+  }
+
+  function rgbToHex({ r, g, b }) {
+    return `#${[r, g, b]
+      .map((channel) => clampRgb(channel).toString(16).padStart(2, "0"))
+      .join("")}`;
+  }
+
+  function mixRgb(base, target, ratio) {
+    return {
+      r: base.r + (target.r - base.r) * ratio,
+      g: base.g + (target.g - base.g) * ratio,
+      b: base.b + (target.b - base.b) * ratio
+    };
+  }
+
+  function buildCategoryGradient(color) {
+    const base = parseHexColor(color);
+    const darkStart = mixRgb(base, { r: 0, g: 0, b: 0 }, 0.18);
+    const harmonicEnd = mixRgb(base, parseHexColor("#67a667"), 0.45);
+    return `linear-gradient(120deg, ${rgbToHex(darkStart)} 0%, ${rgbToHex(harmonicEnd)} 100%)`;
+  }
+
   function toCategoryClassName(categoryId) {
     const normalized = String(categoryId || "")
       .trim()
@@ -350,8 +413,14 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  function getCategoryIconMarkup(categoryId) {
-    const key = String(categoryId || "").trim().toLowerCase();
+  function getCategoryIconMarkup(categoryOrId) {
+    let key = "";
+    if (categoryOrId && typeof categoryOrId === "object") {
+      const category = categoryOrId;
+      key = String(category.icon || category.id || "").trim().toLowerCase();
+    } else {
+      key = String(categoryOrId || "").trim().toLowerCase();
+    }
     const svg = CATEGORY_ICON_SVGS[key] || CATEGORY_ICON_SVGS.default;
     return `<span class="category-icon" aria-hidden="true">${svg}</span>`;
   }
@@ -516,7 +585,7 @@
           data-category-id="${escapeHtml(category.id)}"
           role="menuitem"
           style="--item-index:${index};">
-          ${getCategoryIconMarkup(category.id)}
+          ${getCategoryIconMarkup(category)}
           <span class="category-item-label">${escapeHtml(category.name)}</span>
         </button>`)
       .join("");
@@ -524,14 +593,7 @@
     $menu.html(options);
     $trigger.prop("disabled", false);
 
-    const selectedCategory = selectedId && categoryIdExists(selectedId)
-      ? findCategory(selectedId)
-      : null;
-    if (selectedCategory) {
-      $triggerLabel.html(`${getCategoryIconMarkup(selectedCategory.id)}<span>Categoría: ${escapeHtml(selectedCategory.name)}</span>`);
-    } else {
-      $triggerLabel.text("Categoría");
-    }
+    $triggerLabel.text("Categoría");
     $quickNav.removeClass("is-open");
     $trigger.attr("aria-expanded", "false");
   }
@@ -544,9 +606,37 @@
   }
 
   function extractImageFileName(imagePath) {
-    const normalized = String(imagePath || "").replaceAll("\\", "/");
+    const normalized = String(imagePath || "").trim();
+    if (!normalized || isDataImageUrl(normalized)) return "";
+    const normalizedPath = normalized.replaceAll("\\", "/");
     const prefix = `${IMG_DIR}/`;
-    return normalized.startsWith(prefix) ? normalized.slice(prefix.length) : normalized;
+    return normalizedPath.startsWith(prefix) ? normalizedPath.slice(prefix.length) : normalizedPath;
+  }
+
+  function readImageFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        reject(new Error("MISSING_FILE"));
+        return;
+      }
+
+      if (!String(file.type || "").toLowerCase().startsWith("image/")) {
+        reject(new Error("INVALID_FILE_TYPE"));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        if (!isDataImageUrl(result)) {
+          reject(new Error("INVALID_DATA_URL"));
+          return;
+        }
+        resolve(result);
+      };
+      reader.onerror = () => reject(new Error("FILE_READ_ERROR"));
+      reader.readAsDataURL(file);
+    });
   }
 
   function buildCategoryEditorSelect(selectedId = "") {
@@ -785,11 +875,12 @@
       }
 
       const categoryClassName = toCategoryClassName(category.id);
+      const categoryGradient = buildCategoryGradient(category.color);
       const categoryHtml = `
-        <article class="category-card card shadow-sm mb-3 ${categoryClassName} layout-list" data-category-id="${escapeHtml(category.id)}">
+        <article class="category-card card shadow-sm mb-3 ${categoryClassName} layout-list" data-category-id="${escapeHtml(category.id)}" style="--category-grad:${escapeHtml(categoryGradient)};">
           <button type="button" class="category-header category-toggle" data-category-id="${escapeHtml(category.id)}">
             <span class="category-header-main">
-              ${getCategoryIconMarkup(category.id)}
+              ${getCategoryIconMarkup(category)}
               <span>${escapeHtml(category.name)}</span>
             </span>
             <span class="toggle-indicator" aria-hidden="true">${isOpen ? "-" : "+"}</span>
@@ -1130,7 +1221,9 @@
     event.preventDefault();
     const rawId = $("#categoryId").val().trim();
     const rawName = $("#categoryName").val().trim();
+    const rawIcon = String($("#categoryIcon").val() || "").trim().toLowerCase();
     const normalizedId = rawId.toLowerCase();
+    const normalizedIcon = CATEGORY_ICON_SVGS[rawIcon] ? rawIcon : DEFAULT_CATEGORY_ICON;
 
     if (!normalizedId || !rawName) {
       showAdminMessage("Debes completar identificador y nombre.", true);
@@ -1147,7 +1240,12 @@
       return;
     }
 
-    state.categories.push({ id: normalizedId, name: rawName });
+    state.categories.push({
+      id: normalizedId,
+      name: rawName,
+      color: DEFAULT_CATEGORY_COLOR,
+      icon: normalizedIcon
+    });
     state.categoryVisibility[normalizedId] = true;
     refreshAdminEditors(normalizedId, $("#editProductSelect").val());
     renderProducts();
@@ -1158,7 +1256,7 @@
     validateUniqueAdminIdentifiers();
   }
 
-  function addProduct(event) {
+  async function addProduct(event) {
     event.preventDefault();
 
     const titulo = $("#productTitle").val().trim();
@@ -1169,6 +1267,7 @@
     const price = Number.parseFloat($("#productPrice").val());
     const stock = Number.parseInt($("#productStock").val(), 10);
     const imageName = $("#productImageName").val().trim();
+    const imageFile = document.getElementById("productImageFile")?.files?.[0] || null;
 
     if (!titulo || !author || !code || !categoryId || !description || Number.isNaN(price) || Number.isNaN(stock)) {
       showAdminMessage("Completa todos los campos obligatorios del producto.", true);
@@ -1190,6 +1289,25 @@
       return;
     }
 
+    let imageSource = buildImagePath(imageName);
+    if (imageFile) {
+      if (imageFile.size > MAX_IMAGE_UPLOAD_SIZE_BYTES) {
+        showAdminMessage("La imagen seleccionada supera 2 MB. Elige una imagen mas liviana.", true);
+        return;
+      }
+
+      try {
+        imageSource = await readImageFileAsDataUrl(imageFile);
+      } catch (error) {
+        if (error && error.message === "INVALID_FILE_TYPE") {
+          showAdminMessage("El archivo seleccionado debe ser una imagen valida.", true);
+          return;
+        }
+        showAdminMessage("No se pudo leer la imagen seleccionada.", true);
+        return;
+      }
+    }
+
     state.products.push({
       titulo,
       author,
@@ -1198,7 +1316,7 @@
       description,
       price,
       stock,
-      image: buildImagePath(imageName)
+      image: imageSource
     });
 
     refreshAdminEditors(categoryId, code);
@@ -1347,7 +1465,11 @@
     product.description = nextDescription;
     product.price = nextPrice;
     product.stock = nextStock;
-    product.image = buildImagePath(nextImageName);
+    if (nextImageName) {
+      product.image = resolveImageSource(nextImageName);
+    } else if (!isDataImageUrl(product.image)) {
+      product.image = buildImagePath("");
+    }
 
     if (oldCode !== nextCode && state.cart[oldCode]) {
       state.cart[nextCode] = (state.cart[nextCode] || 0) + state.cart[oldCode];
@@ -1541,6 +1663,18 @@
       bootstrapData();
       normalizeState();
     }
+
+    // El enunciado pide que la cesta arranque vacía y visible en cada carga.
+    Object.entries(state.cart).forEach(([code, quantity]) => {
+      const product = findProduct(code);
+      const parsedQuantity = Number.parseInt(quantity, 10);
+      if (product && Number.isInteger(parsedQuantity) && parsedQuantity > 0) {
+        product.stock += parsedQuantity;
+      }
+    });
+    state.cart = {};
+    state.cartVisible = true;
+
     saveStateToStorage();
 
     refreshAdminEditors();
