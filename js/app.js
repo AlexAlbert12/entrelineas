@@ -323,11 +323,8 @@
 
       state.categories = parsedState.categories;
       state.products = parsedState.products;
-      state.cart = parsedState.cart;
       state.cartVisible = parsedState.cartVisible;
       state.categoryVisibility = parsedState.categoryVisibility;
-      state.catalogSearchQuery = parsedState.catalogSearchQuery;
-      state.catalogSortBy = parsedState.catalogSortBy;
 
       normalizeState();
       return true;
@@ -1248,7 +1245,6 @@
     const description = $("#productDescription").val().trim();
     const price = Number.parseFloat($("#productPrice").val());
     const stock = Number.parseInt($("#productStock").val(), 10);
-    const imageName = $("#productImageName").val().trim();
     const imageFile = document.getElementById("productImageFile")?.files?.[0] || null;
 
     if (!titulo || !author || !code || !categoryId || !description || Number.isNaN(price) || Number.isNaN(stock)) {
@@ -1271,7 +1267,7 @@
       return;
     }
 
-    let imageSource = buildImagePath(imageName);
+    let imageSource = buildImagePath("");
     if (imageFile) {
       if (imageFile.size > MAX_IMAGE_UPLOAD_SIZE_BYTES) {
         showAdminMessage("La imagen seleccionada supera 2 MB. Elige una imagen mas liviana.", true);
