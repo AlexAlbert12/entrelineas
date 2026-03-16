@@ -304,20 +304,13 @@
   }
 
   function saveStateToStorage() {
-    try {
-      const snapshot = {
-        categories: state.categories,
-        products: state.products,
-        cart: state.cart,
-        cartVisible: state.cartVisible,
-        categoryVisibility: state.categoryVisibility,
-        catalogSearchQuery: state.catalogSearchQuery,
-        catalogSortBy: state.catalogSortBy
-      };
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
-    } catch (error) {
-      console.warn("No se pudo guardar el estado en localStorage.", error);
-    }
+    const snapshot = {
+      categories: state.categories,
+      products: state.products,
+      cartVisible: state.cartVisible,
+      categoryVisibility: state.categoryVisibility
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
   }
 
   function loadStateFromStorage() {
@@ -931,14 +924,13 @@
     const $clearCartBtn = $("#clearCartBtn");
     const $totalLabel = $(".cart-footer .total-label");
     const items = Object.entries(state.cart);
-    const isEmpty = items.length === 0;
+    const isEmpty = Object.keys(state.cart).length === 0;
 
     if (isEmpty) {
       $cartItems.html(`
-        <div class="cart-empty-state">
-          <svg class="cart-empty-icon" height="21" viewBox="0 0 21 21" width="21" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" transform="translate(2 4)"><path d="m3 2.5h12.5l-1.5855549 5.54944226c-.2453152.85860311-1.0300872 1.45055774-1.9230479 1.45055774h-6.70131161c-1.01909844 0-1.87522688-.76627159-1.98776747-1.77913695l-.80231812-7.22086305h-2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="5" cy="12" r="1"/><circle cx="13" cy="12" r="1"/></g></g></svg><span id="cartCountBadge" class="cart-count-badge is-empty">0</span>
-          <p class="mb-0">La cesta está vacía.</p>
-        </div>`);
+      <div class="cart-empty-state">
+        <i class="bi bi-cart-x fs-1 opacity-50"></i> <p class="mb-0">La cesta está vacía.</p>
+      </div>`);
     } else {
       const cartHtml = items
         .map(([code, quantity]) => {
@@ -969,8 +961,8 @@
 
     $("#cartTotal").text(formatCurrency(calculateTotal()));
     $totalLabel.toggleClass("d-none", isEmpty);
-    $placeOrderBtn.toggleClass("d-none", isEmpty).prop("disabled", isEmpty);
-    $clearCartBtn.toggleClass("d-none", isEmpty).prop("disabled", isEmpty);
+    $("#placeOrderBtn").prop("disabled", isEmpty);
+    $("#clearCartBtn").prop("disabled", isEmpty);
     renderCartBadge();
   }
 
@@ -1161,19 +1153,9 @@
   }
 
   function requestAdminAccess() {
-    const modalElement = document.getElementById("adminAccessModal");
-    if (!modalElement) return;
-
-    const formElement = document.getElementById("adminAccessForm");
-    if (formElement) formElement.reset();
-
-    $("#adminAccessError").addClass("d-none").text("");
-    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-    modal.show();
-
-    setTimeout(() => {
-      $("#adminAccessPassword").trigger("focus");
-    }, 120);
+    $("#adminAccessForm")[0].reset();
+    $("#adminAccessError").addClass("d-none");
+    $("#adminAccessModal").modal('show');
   }
 
   function handleAdminAccessSubmit(event) {
@@ -1664,7 +1646,6 @@
       normalizeState();
     }
 
-    // El enunciado pide que la cesta arranque vacía y visible en cada carga.
     Object.entries(state.cart).forEach(([code, quantity]) => {
       const product = findProduct(code);
       const parsedQuantity = Number.parseInt(quantity, 10);
@@ -1682,7 +1663,7 @@
     $("#catalogSort").val(state.catalogSortBy);
     renderProducts();
     renderCart();
-    setCartVisibility(state.cartVisible, false, false);
+    setCartVisibility(true, false, false);
     bindEvents();
   }
 

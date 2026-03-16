@@ -888,6 +888,12 @@ body {
   font-weight: 700;
 }
 
+.input-group {
+  display: flex;
+  flex-direction: row;
+  align-items:center;
+}
+
 #adminModal .admin-code-group .form-control {
   border-right: none;
 }
